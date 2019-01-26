@@ -28,3 +28,16 @@ export function useRoundPlayers(roundId: string) {
         .map((playerId) => usePlayer(playerId))
 }
 
+export function useGame(gameId: string) {
+    return useStore(store => store.games[gameId])
+}
+
+export function useRoundGames(roundId: string) {
+    const round = useRound(roundId)
+
+    return round
+        .games
+        .map((gameId) => useGame(gameId))
+
+}
+

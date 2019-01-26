@@ -1,7 +1,8 @@
 import { ActionType } from "typesafe-actions";
 import * as actions from './actions'
 
-export type ValidAction = ActionType<typeof actions>
+export type Actions = typeof actions
+export type ValidAction = ActionType<Actions>
 
 export type Store = {
     tournaments: {
@@ -30,6 +31,7 @@ export type Round = {
     tournamentId: string,
     date: number,
     players: string[]
+    games: string[],
 }
 
 export type Player = {
@@ -39,10 +41,14 @@ export type Player = {
 
 export type Game = {
     id: string,
-    started: number,
+    started?: number,
     roundId: string,
     bluePlayers: string[],
     redPlayers: string[],
+    score?: {
+        red: number,
+        blue: number,
+    }
 }
 
 const keysIn = (keys: string[], validKeys: string[]) => {
@@ -59,6 +65,10 @@ export function importState(state: Store): Store {
 
     Object.values(state.rounds).forEach((round) => {
         round.players = keysIn(round.players, Object.keys(state.players))
+    })
+
+    Object.values(state.tournaments).forEach((tournament) => {
+        tournament.players = keysIn(tournament.players, Object.keys(state.players))
     })
 
     return newState
@@ -109,6 +119,7 @@ export const reducer = (state: Store, action: ValidAction): Store => {
                         tournamentId: tournamentId,
                         date: date,
                         players: [],
+                        games: [],
                     }
                 }
             }
@@ -169,6 +180,49 @@ export const reducer = (state: Store, action: ValidAction): Store => {
                     [roundId]: {
                         ...state.rounds[roundId],
                         players: state.rounds[roundId].players.filter((id) => id !== playerId)
+                    }
+                }
+            }
+        }
+
+        case 'startRound': {
+            const { roundId, games, date } = action.payload
+
+            const round = state.rounds[roundId]
+            const stateGames = games.reduce((result, game) => (
+                {
+                    ...result,
+                    [game.id]: {
+                        ...game,
+                        started: date,
+                    }
+                }
+            ), state.games)
+
+            return {
+                ...state,
+                games: stateGames,
+                rounds: {
+                    ...state.rounds,
+                    [roundId]: {
+                        ...round,
+                        games: games.map(game => game.id),
+                    }
+                }
+            }
+        }
+
+        case 'updateGameScore': {
+            const { gameId, score } = action.payload
+            const game = state.games[gameId]
+
+            return {
+                ...state,
+                games: {
+                    ...state.games,
+                    [gameId]: {
+                        ...game,
+                        score,
                     }
                 }
             }

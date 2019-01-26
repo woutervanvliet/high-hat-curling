@@ -1,0 +1,64 @@
+.lane {
+  padding: 20px;
+  background: aliceblue;
+  display: grid;
+  grid-auto-columns: 300px;
+  grid-gap: 20px;
+  grid-auto-flow: column;
+
+  .sheet {
+    padding: 20px;
+    border: 2px solid black;
+    grid-gap: 20px;
+    background: cornsilk;
+    display: grid;
+    grid-template-rows: min-content 1fr;
+    align-items: start;
+    .house {
+      position: relative;
+      background: darkslateblue;
+      grid-column: 1 / span 2;
+      margin: auto;
+      width: 50%;
+      padding-top: 50%;
+      border-radius: 50%;
+      &:after {
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        right: 20px;
+        border-radius: 50%;
+        bottom: 20px;
+        background: red;
+        content: "";
+        display: block;
+        border: 20px solid white;
+      }
+    }
+    .team {
+      display: grid;
+      grid-gap: 20px;
+      grid-auto-flow: row;
+    }
+    .player {
+      border-bottom: 1px solid black;
+    }
+    .save {
+      grid-column: 1 / span 2;
+    }
+  }
+}
+
+.playerList {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, max-content));
+  grid-auto-rows: 1fr;
+  grid-gap: 10px;
+
+  label {
+    padding: 5px;
+    border: 1px solid black;
+    border-radius: 5px;
+    white-space: nowrap;
+  }
+}

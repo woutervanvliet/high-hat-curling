@@ -35,11 +35,17 @@ function AddPlayer(props: { tournamentId: string }) {
                         const playerId = uuid()
                         addPlayer(playerId, values.name)
                         addPlayerToTournament(playerId, values.tournamentId)
-                    } else if (values.selectedPlayer) {
+                        formik.resetForm({
+                            name: '',
+                            selectedPlayer: 'writeIn',
+                            tournamentId: values.tournamentId,
+                        })
+                    } else if (values.selectedPlayer !== 'writeIn') {
                         addPlayerToTournament(values.selectedPlayer, values.tournamentId)
+                        formik.resetForm()
+                    } else {
+                        formik.setSubmitting(false)
                     }
-
-                    formik.resetForm()
                 }
             }
         >{
@@ -62,7 +68,7 @@ function AddPlayer(props: { tournamentId: string }) {
                         </optgroup>
                     </Field>
                     {values.selectedPlayer === 'writeIn' && (
-                        <Field type="text" name="name" />
+                        <Field type="text" name="name" autocomplete="off" />
                     )}
                     <button type="submit">Add player</button>
                 </Form>)

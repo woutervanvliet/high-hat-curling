@@ -18,14 +18,20 @@ const makeRenderRoute = (loader: any): React.ComponentType<RouteComponentProps> 
 const Tournaments = makeRenderRoute(() => import('./components/tournaments'))
 const Tournament = makeRenderRoute(() => import('./components/tournament'))
 const Player = makeRenderRoute(() => import('./components/player'))
-const Round = makeRenderRoute(() => import('./components/round'))
+const Round = makeRenderRoute(async () => {
+    return import('./components/round');
+})
+
+function Spinner() {
+    return <b>Spin spin</b>
+}
 
 class App extends Component {
   render() {
     return (
         <DataProvider>
             <BrowserRouter basename="/">
-                <React.Suspense fallback="Please wait">
+                <React.Suspense fallback={<Spinner />}>
                     <Switch>
                         <Route exact={true} component={Player} path="/player/:playerId" />
                         <Route exact={true} component={Round} path="/:tournamentId/:roundId" />

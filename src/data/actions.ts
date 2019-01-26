@@ -1,3 +1,5 @@
+import {Game} from "./data";
+
 export function addTournament(id: string, name: string) {
     return {
         type: 'addTournament' as 'addTournament',
@@ -61,6 +63,27 @@ export function removePlayerFromRound(playerId: string, roundId: string) {
         payload: {
             playerId,
             roundId,
+        }
+    }
+}
+
+export function startRound(roundId: string, games: Game[], date: number) {
+    return {
+        type: 'startRound' as 'startRound',
+        payload: {
+            roundId,
+            games,
+            date,
+        }
+    }
+}
+
+export function updateGameScore(gameId: string, score: { red: number, blue: number }) {
+    return {
+        type: 'updateGameScore' as 'updateGameScore',
+        payload: {
+            gameId,
+            score,
         }
     }
 }
