@@ -1,7 +1,8 @@
 import * as React from 'react'
 import uuid from 'uuid/v4'
-import {useAction, useTournaments} from "../data/data-provider";
+import {useAction, useStore} from "../data/data-provider";
 import {Formik, Form, Field, FormikBag} from 'formik'
+import {Link} from "react-router-dom";
 
 const initialTournament = {
     name: '',
@@ -26,8 +27,8 @@ function AddTournament() {
     )
 }
 
-export function Tournaments() {
-    const tournaments = useTournaments()
+export default function Tournaments() {
+    const tournaments = useStore((store) => Object.values(store.tournaments))
 
     return (
         <div>
@@ -36,7 +37,7 @@ export function Tournaments() {
                 {
                     tournaments.map((tournament) => {
                         return (
-                            <li key={tournament.id}>{tournament.name}</li>
+                            <li key={tournament.id}><Link to={`/${tournament.id}`}>{tournament.name}</Link></li>
                         )
                     })
                 }

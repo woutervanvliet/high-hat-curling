@@ -1,14 +1,38 @@
 import React, { Component } from 'react';
-import logo from './logo.svg';
 import './App.css';
-import {DataProvider, useStore} from "./data/data-provider";
-import {Tournaments} from "./components/tournaments";
+import {DataProvider} from "./data/data-provider";
+import {
+    BrowserRouter,
+    Switch,
+    Route, RouteProps, RouteComponentProps, Link,
+} from 'react-router-dom'
+
+const makeRenderRoute = (loader: any): React.ComponentType<RouteComponentProps> => {
+    const LazyComponent = React.lazy(loader)
+
+    return (props: RouteComponentProps) => {
+        return <LazyComponent {...props.match.params} />
+    }
+}
+
+const Tournaments = makeRenderRoute(() => import('./components/tournaments'))
+const Tournament = makeRenderRoute(() => import('./components/tournament'))
+const Player = makeRenderRoute(() => import('./components/player'))
 
 class App extends Component {
   render() {
     return (
         <DataProvider>
-            <Tournaments />
+            <BrowserRouter basename="/">
+                <React.Suspense fallback="Please wait">
+                    <Switch>
+                        <Route exact={true} component={Player} path="/player/:playerId" />
+                        <Route exact={true} component={Tournament} path="/:tournamentId" />
+                        <Route path="/" exact={true} component={Tournaments} />
+                        <Route render={() => <p>4-ooooh-4 <Link to="/">Home</Link></p>} />
+                    </Switch>
+                </React.Suspense>
+            </BrowserRouter>
         </DataProvider>
     );
   }

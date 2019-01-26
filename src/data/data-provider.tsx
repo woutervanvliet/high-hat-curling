@@ -25,13 +25,13 @@ const Context = React.createContext<Store>({
 
 const DispatchContext = React.createContext<(action: ValidAction) => void>(() => undefined)
 
-export function useStore(): Store {
-    return useContext(Context)
-}
-
-export function useTournaments(): Tournament[] {
-    const context = useStore()
-    return Object.values(context.tournaments)
+export function useStore<T>(selector: (store: Store) => T): T {
+    const store = useContext(Context)
+    const value = selector(store)
+    if (value === undefined) {
+        throw new Error('Could not select that value')
+    }
+    return value
 }
 
 function useDispatch() {
@@ -39,32 +39,64 @@ function useDispatch() {
 }
 
 type ActionType = typeof actions
-export function useAction<A extends keyof ActionType>(action: A): ActionType[A] {
+export function useAction<A extends keyof ActionType>(actionName: A): ActionType[A] {
     const dispatch = useDispatch()
-    const actionCreator = actions[action]
+    const actionCreator = actions[actionName]
 
     // @ts-ignore
     return (...args) => {
-        const action = actionCreator(...args)
-        console.log(action)
-        return dispatch(action)
+        console.group(actionName)
+        try {
+            // @ts-ignore
+            const action = actionCreator(...args)
+            console.log(action.payload)
+            return dispatch(action)
+        } finally {
+            console.groupEnd()
+        }
     }
 }
 
-export class DataProvider extends React.PureComponent<Props> {
-    state: Store = {
-        games: {},
-        players: {},
-        rounds: {},
-        tournaments: {},
+type ProviderState = {
+    store: Store,
+    errorMessage?: string,
+}
+
+const initialStore = {
+    games: {},
+    players: {},
+    rounds: {},
+    tournaments: {},
+}
+
+export class DataProvider extends React.PureComponent<Props, ProviderState> {
+    state: ProviderState = {
+        store: initialStore,
     }
 
     handleDispatch = (action: ValidAction) => {
-        this.setState((state: Store) => reducer(state, action))
+        this.setState((state: ProviderState) => ({
+            store: reducer(state.store, action),
+        }))
     }
 
-    componentDidUpdate() {
-        localStorage.setItem('high-hat.state', JSON.stringify(this.state))
+    handleReset = () => {
+        this.setState({
+            errorMessage: undefined,
+            store: initialStore,
+        })
+    }
+
+    static getDerivedStateFromError(error: Error) {
+        return {
+            errorMessage: error.message,
+        }
+    }
+
+    componentDidUpdate(prevProps: Props, prevState: ProviderState) {
+        if (prevState.store !== this.state.store) {
+            localStorage.setItem('high-hat.state', JSON.stringify(this.state.store))
+        }
     }
 
     componentWillMount(): void {
@@ -73,17 +105,25 @@ export class DataProvider extends React.PureComponent<Props> {
             if (!item) {
                 return
             }
-            const state = JSON.parse(item)
-            this.setState(state)
+            const store = JSON.parse(item)
+            this.setState({ store })
         } catch (e) {
             localStorage.removeItem('high-hat.state')
         }
     }
 
     render() {
+        if (this.state.errorMessage) {
+            return (
+                <div className="error">
+                    <b>{this.state.errorMessage}</b>
+                    <button onClick={this.handleReset}>Reset state</button>
+                </div>
+            )
+        }
         return (
             <DispatchContext.Provider value={this.handleDispatch}>
-                <Context.Provider value={this.state}>
+                <Context.Provider value={this.state.store}>
                     {this.props.children}
                 </Context.Provider>
             </DispatchContext.Provider>
