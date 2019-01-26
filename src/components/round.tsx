@@ -5,11 +5,25 @@ import {ChangeEvent, useState} from "react";
 import {Game, Player} from "../data/data";
 import uuid from 'uuid/v4'
 
-function calculateGames(players: Player[], roundId: string): Game[] {
-    const lanes = Math.round(players.length / 8)
+function createGame(players: string[], roundId: string): Game {
+    // Randomize which team gets most players
+    const half = Math.random() > 0.5
+        ? Math.ceil(players.length / 2)
+        : Math.floor(players.length / 2)
+
+    return {
+        id: uuid(),
+        bluePlayers: players.slice(0, half),
+        redPlayers: players.slice(half),
+        roundId: roundId,
+        started: Date.now(),
+    }
+}
+
+export function calculateGames(players: string[], roundId: string): Game[] {
     const games: Game[] = []
     const now = Date.now()
-    const availablePlayers = players.map((player) => player.id)
+    const availablePlayers = players.slice()
 
     const pickPlayers = (num: number) => {
         const players: string[] = []
@@ -22,15 +36,16 @@ function calculateGames(players: Player[], roundId: string): Game[] {
         return players
     }
 
-    for(let i = 1; i <= lanes; i++) {
-        const game: Game = {
-            id: uuid(),
-            bluePlayers: pickPlayers(4),
-            redPlayers: pickPlayers(4),
-            roundId: roundId,
-            started: now,
+    while(availablePlayers.length > 0) {
+        let usePlayers: string[] | undefined = undefined
+        if (availablePlayers.length <= 9) {
+            usePlayers = pickPlayers(players.length)
+        } else if (availablePlayers.length === 10 || availablePlayers.length === 11) {
+            usePlayers = pickPlayers(4)
+        } else {
+            usePlayers = pickPlayers(8)
         }
-        games.push(game)
+        games.push(createGame(usePlayers, roundId))
     }
 
     return games
@@ -40,7 +55,7 @@ function useCalculateGames(players: Player[], roundId: string): [Game[], (() => 
     const [games, setGames] = useState([] as Game[])
 
     const calculate = (): void => {
-        const games = calculateGames(players, roundId);
+        const games = calculateGames(players.map(p => p.id), roundId);
         setGames(games)
     }
 
