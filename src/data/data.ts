@@ -45,6 +45,25 @@ export type Game = {
     redPlayers: string[],
 }
 
+const keysIn = (keys: string[], validKeys: string[]) => {
+    return keys.filter((key) => validKeys.includes(key))
+}
+
+export function importState(state: Store): Store {
+    const newState: Store = {
+        rounds: state.rounds,
+        players: state.players,
+        tournaments: state.tournaments,
+        games: state.games,
+    }
+
+    Object.values(state.rounds).forEach((round) => {
+        round.players = keysIn(round.players, Object.keys(state.players))
+    })
+
+    return newState
+}
+
 const unique = (values: string[]) => {
     return Array.from(new Set(values))
 }
@@ -118,6 +137,38 @@ export const reducer = (state: Store, action: ValidAction): Store => {
                             ...state.tournaments[tournamentId].players,
                             playerId,
                         ])
+                    }
+                }
+            }
+        }
+
+        case 'addPlayerToRound': {
+            const { roundId, playerId } = action.payload
+            return {
+                ...state,
+                rounds: {
+                    ...state.rounds,
+                    [roundId]: {
+                        ...state.rounds[roundId],
+                        players: unique([
+                            ...state.rounds[roundId].players,
+                            playerId,
+                        ])
+                    }
+                }
+            }
+        }
+
+        case 'removePlayerFromRound': {
+            const { roundId, playerId } = action.payload
+
+            return {
+                ...state,
+                rounds: {
+                    ...state.rounds,
+                    [roundId]: {
+                        ...state.rounds[roundId],
+                        players: state.rounds[roundId].players.filter((id) => id !== playerId)
                     }
                 }
             }

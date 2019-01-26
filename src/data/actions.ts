@@ -44,3 +44,23 @@ export function addPlayerToTournament(playerId: string, tournamentId: string) {
         }
     }
 }
+
+export function addPlayerToRound(playerId: string, roundId: string) {
+    return {
+        type: 'addPlayerToRound' as 'addPlayerToRound',
+        payload: {
+            playerId,
+            roundId,
+        }
+    }
+}
+
+export function removePlayerFromRound(playerId: string, roundId: string) {
+    return {
+        type: 'removePlayerFromRound' as 'removePlayerFromRound',
+        payload: {
+            playerId,
+            roundId,
+        }
+    }
+}

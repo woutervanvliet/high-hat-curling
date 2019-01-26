@@ -4,13 +4,10 @@ import {Redirect} from "react-router";
 import {Link} from "react-router-dom";
 import uuid from "uuid/v4"
 import {Formik, Form, Field} from "formik";
-
-function useTournament(id: string) {
-    return useStore((store) => store.tournaments[id])
-}
+import {useTournament, useRound} from "../data/selectors";
 
 function RoundLink (props: { id: string}) {
-    const round = useStore(store => store.rounds[props.id])
+    const round = useRound(props.id)
 
     return (
         <Link to={`/${round.tournamentId}/${round.id}`}>Round: {round.date} ({round.players.length} players}</Link>

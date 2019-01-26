@@ -1,8 +1,8 @@
 import * as React from "react";
 import {
     reducer,
+    importState,
     Store,
-    Tournament,
     ValidAction
 } from "./data";
 import {useContext} from "react";
@@ -105,7 +105,7 @@ export class DataProvider extends React.PureComponent<Props, ProviderState> {
             if (!item) {
                 return
             }
-            const store = JSON.parse(item)
+            const store = importState(JSON.parse(item))
             this.setState({ store })
         } catch (e) {
             localStorage.removeItem('high-hat.state')
