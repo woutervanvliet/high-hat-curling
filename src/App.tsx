@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import './App.css';
+import './app.scss';
 import {DataProvider} from "./data/data-provider";
 import {
     BrowserRouter,
