@@ -4,7 +4,7 @@ import {Redirect} from "react-router";
 import {Link} from "react-router-dom";
 import uuid from "uuid/v4"
 import {Formik, Form, Field} from "formik";
-import {useTournament, useRound} from "../data/selectors";
+import {useTournament, useRound, useTournamentResults} from "../data/selectors";
 
 function RoundLink (props: { id: string}) {
     const round = useRound(props.id)
@@ -12,12 +12,6 @@ function RoundLink (props: { id: string}) {
     return (
         <Link to={`/${round.tournamentId}/${round.id}`}>Round: {round.date} ({round.players.length} players}</Link>
     )
-}
-
-function PlayerLink (props: { id: string }) {
-    const player = useStore((store) => store.players[props.id])
-
-    return <Link to={`/player/${player.id}`}>{player.name}</Link>
 }
 
 function AddPlayer(props: { tournamentId: string }) {
@@ -85,6 +79,7 @@ function AddRound(props: { tournamentId: string}) {
 
 export default function Tournament(props: { tournamentId: string }) {
     const tournament = useTournament(props.tournamentId)
+    const tournamentResults = useTournamentResults(props.tournamentId)
 
     return (
         <div className="tournament">
@@ -98,10 +93,36 @@ export default function Tournament(props: { tournamentId: string }) {
             </ul>
 
             <h2>Players</h2>
-            <ul>
-                {tournament.players.map(playerId => <li key={playerId}><PlayerLink id={playerId} /></li>)}
-                <li><AddPlayer tournamentId={props.tournamentId} /></li>
-            </ul>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <td>Games played</td>
+                        <td>Wins</td>
+                        <td>Draws</td>
+                        <td>Losses</td>
+                        <td>Stones</td>
+                    </tr>
+                </thead>
+                <tbody>
+                {tournamentResults
+                    .map(({ player, gamesPlayed, wins, draws, losses, stones }) => (
+                        <tr key={player.id}>
+                            <td><Link to={`/player/${player.id}`}>{player.name}</Link></td>
+                            <td>{gamesPlayed}</td>
+                            <td>{wins}</td>
+                            <td>{draws}</td>
+                            <td>{losses}</td>
+                            <td>{stones}</td>
+                        </tr>
+                    ))}
+                    <tr>
+                        <td>
+                           <AddPlayer tournamentId={props.tournamentId} />
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
         </div>
     )
 }
