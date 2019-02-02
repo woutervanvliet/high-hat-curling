@@ -4,6 +4,7 @@ import {Db, MongoClient} from "mongodb";
 import http from 'http'
 import io from 'socket.io'
 import {ValidAction} from "../data/data";
+import path from "path";
 
 async function getDatabase(url: string, dbName: string) {
 	return new Promise<Db>((resolve, reject) => {
@@ -39,6 +40,12 @@ export default async function main() {
 	}
 
 	app.use('/api', await makeApiRoute(database, dispatch))
+	const buildPath = path.join(__dirname, '../../build')
+
+    app.use('/', express.static(buildPath, {
+    	cacheControl: true,
+        maxAge: '30d',
+	}))
 
 	server.listen(port, () => {
 		console.log('Application now started')
