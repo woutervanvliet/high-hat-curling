@@ -11,6 +11,7 @@ import * as actions from './actions'
 type Props = {
     children: React.ReactChild | React.ReactChildren,
     onDispatch?: (action: ValidAction) => void,
+    filter?: (action: ValidAction) => boolean,
     getInitialState: () => Promise<Store>,
 }
 
@@ -36,7 +37,7 @@ export function useStore<T>(selector: (store: Store) => T): T {
     return value
 }
 
-function useDispatch() {
+export function useDispatch() {
     return useContext(DispatchContext)
 }
 
@@ -102,12 +103,15 @@ export function DataProvider(props: Props) {
     const storeCache = getCache(props.getInitialState)
     const [state, dispatch] = useReducer(reducer, storeCache.value)
     const onDispatch = useCallback((action: any) => {
+        if (props.filter && !props.filter(action)) {
+            return
+        }
+
         if (props.onDispatch) {
             props.onDispatch(action)
         }
-
         dispatch(action)
-    }, [dispatch, props.onDispatch])
+    }, [dispatch, props.onDispatch, props.filter])
 
     return (
         <DispatchContext.Provider value={onDispatch}>

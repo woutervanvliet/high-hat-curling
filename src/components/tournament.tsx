@@ -62,7 +62,7 @@ function AddPlayer(props: { tournamentId: string }) {
                         </optgroup>
                     </Field>
                     {values.selectedPlayer === 'writeIn' && (
-                        <Field type="text" name="name" autocomplete="off" />
+                        <Field type="text" name="name" autoComplete="off" />
                     )}
                     <button type="submit">Add player</button>
                 </Form>)
@@ -70,7 +70,7 @@ function AddPlayer(props: { tournamentId: string }) {
     )
 }
 
-function AddRound(props: { tournamentId: string}) {
+function AddRound(props: { tournamentId: string }) {
     const addRound = useAction('addRound')
     const id = uuid()
 

@@ -1,6 +1,10 @@
-import React, { Component, Suspense } from 'react';
+import React, {Component, Suspense, useEffect} from 'react';
 import './app.scss';
-import {DataProvider} from "./data/data-provider";
+import {DataProvider, useAction, useDispatch} from "./data/data-provider";
+import io from 'socket.io-client'
+
+const senderId = Math.random().toString(16).split('.')[1]
+
 import {
     BrowserRouter,
     Switch,
@@ -27,8 +31,15 @@ function Spinner() {
     return <b>Spin spin</b>
 }
 
-function onDispatch (action: ValidAction) {
-    const body = JSON.stringify(action)
+function onDispatch (action: ValidAction & { serverTime?: number }) {
+    if (action.serverTime) {
+        // don't re-process server actions
+        return
+    }
+    const body = JSON.stringify({
+        ...action,
+        senderId,
+    })
 
     fetch('/api/reduce', {
         body,
@@ -39,12 +50,19 @@ function onDispatch (action: ValidAction) {
         }
     })
         .then((response) => response.json())
-        .then(({ ok }) => {
-            console.log({ ok })
+        .then(({ ok, error }) => {
+            if (!ok) {
+                throw new Error(error || 'That was hardly ok')
+            }
         })
         .catch((error) => {
             console.error(error)
         })
+}
+
+const filter = (action: ValidAction & { senderId?: string }) => {
+    return !action.senderId || action.senderId !== senderId;
+
 }
 
 async function loadData(): Promise<Store> {
@@ -58,22 +76,40 @@ async function loadData(): Promise<Store> {
     return response.json()
 }
 
+function Listener(props: { children: any, path: string }) {
+    const dispatch = useDispatch()
+
+    useEffect(() => {
+        const socket = io()
+        socket.on('dispatch', (event: ValidAction & { serverTime: number }) => {
+            dispatch(event)
+        })
+
+        return () => socket.disconnect()
+
+    }, [props.path])
+
+    return props.children
+}
+
 class App extends Component {
   render() {
     return (
         <Suspense fallback={<p>Loading...</p>}>
-            <DataProvider onDispatch={onDispatch} getInitialState={loadData}>
-                <BrowserRouter basename="/">
-                    <React.Suspense fallback={<Spinner />}>
-                        <Switch>
-                            <Route exact={true} component={Player} path="/player/:playerId" />
-                            <Route exact={true} component={Round} path="/:tournamentId/:roundId" />
-                            <Route exact={true} component={Tournament} path="/:tournamentId" />
-                            <Route path="/" exact={true} component={Tournaments} />
-                            <Route render={() => <p>4-ooooh-4 <Link to="/">Home</Link></p>} />
-                        </Switch>
-                    </React.Suspense>
-                </BrowserRouter>
+            <DataProvider onDispatch={onDispatch} getInitialState={loadData} filter={filter}>
+                <Listener path="ws://localhost:5000">
+                    <BrowserRouter basename="/">
+                        <React.Suspense fallback={<Spinner />}>
+                            <Switch>
+                                <Route exact={true} component={Player} path="/player/:playerId" />
+                                <Route exact={true} component={Round} path="/:tournamentId/:roundId" />
+                                <Route exact={true} component={Tournament} path="/:tournamentId" />
+                                <Route path="/" exact={true} component={Tournaments} />
+                                <Route render={() => <p>4-ooooh-4 <Link to="/">Home</Link></p>} />
+                            </Switch>
+                        </React.Suspense>
+                    </BrowserRouter>
+                </Listener>
             </DataProvider>
         </Suspense>
     );

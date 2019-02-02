@@ -1,9 +1,9 @@
 import express from 'express'
 import bodyParser from 'body-parser'
-import { reducer, Store } from '../data/data'
+import {reducer, Store, ValidAction} from '../data/data'
 import { Db } from 'mongodb'
 
-export default function api(database: Db) {
+export default async function api(database: Db, dispatch: (action: ValidAction) => void) {
 	const app = express()
     const collection = database.collection('appState')
 
@@ -24,6 +24,7 @@ export default function api(database: Db) {
 							rounds: {},
 							games: {},
 						})
+						return
 					}
 
 				    const {
@@ -37,6 +38,8 @@ export default function api(database: Db) {
 		})
 	}
 
+	let state: Store = await getState()
+
 	app.use(bodyParser.json())
 
 	app.get('/hello', (req, res) => {
@@ -44,23 +47,26 @@ export default function api(database: Db) {
 	})
 
 	app.get('/state', async (req, res) => {
-	    res.json(await getState())
+	    res.json(state)
 	})
 
 	app.post('/reduce', async (req, res) => {
-		console.log(req.body)
+		state = reducer(state, req.body)
 
-		const state = reducer(await getState(), req.body)
+		dispatch(req.body)
 
 		collection.insertOne({
 			...state,
 			date: Date.now(),
-		}, (err, result) => {
-			console.log(JSON.stringify({ err, result }, null, 4))
-		})
-
-		res.json({
-			ok: true,
+		}, (error, result) => {
+		    if (error) {
+		    	res.status(500)
+				res.json({ ok: false, error })
+			} else {
+				res.json({
+					ok: true,
+				})
+			}
 		})
 	})
 
