@@ -86,6 +86,10 @@ function createCache(func: () => Promise<any>) {
                         value = returnValue
                         resolved = true
                     })
+                    .catch((error) => {
+                        console.log(error)
+                        resolved = true
+                    })
             }
 
             throw promise
@@ -102,6 +106,10 @@ export function DataProvider(props: Props) {
 
     const storeCache = getCache(props.getInitialState)
     const [state, dispatch] = useReducer(reducer, storeCache.value)
+    if (state === undefined) {
+        throw new Error('State cannot be undefined')
+    }
+
     const onDispatch = useCallback((action: any) => {
         if (props.filter && !props.filter(action)) {
             return

@@ -31,14 +31,7 @@ export default async function main() {
 	const server = new http.Server(app)
 	const socket = io(server)
 
-	socket.on('connection', (socket) => {
-	    socket.on('event', (action) => {
-	    	console.log('received', action)
-		})
-	})
-
 	const dispatch = (event: ValidAction) => {
-		console.log('spreading out', event)
 		socket.emit('dispatch', {
 			...event,
 			serverTime: Date.now(),

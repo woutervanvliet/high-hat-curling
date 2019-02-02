@@ -1,4 +1,4 @@
-import React, {Component, Suspense, useEffect} from 'react';
+import React, {Component, Suspense, useEffect, useState} from 'react';
 import './app.scss';
 import {DataProvider, useAction, useDispatch} from "./data/data-provider";
 import io from 'socket.io-client'
@@ -78,16 +78,32 @@ async function loadData(): Promise<Store> {
 
 function Listener(props: { children: any, path: string }) {
     const dispatch = useDispatch()
+    const [connected, setConnected] = useState(false)
 
     useEffect(() => {
-        const socket = io()
+        const socket = io(props.path, {
+            autoConnect: false,
+            reconnection: true,
+        })
         socket.on('dispatch', (event: ValidAction & { serverTime: number }) => {
             dispatch(event)
         })
+        socket.on('connect', () => {
+            setConnected(true)
+        })
+        socket.on('disconnect', () => {
+            setConnected(false)
+        })
+
+        socket.open()
 
         return () => socket.disconnect()
 
     }, [props.path])
+
+    if (!connected) {
+        return <p>Oops, we cant connect to the server atm.</p>
+    }
 
     return props.children
 }
