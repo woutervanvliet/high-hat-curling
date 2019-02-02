@@ -42,7 +42,8 @@
     "eject": "react-scripts eject",
     "now-build": "react-scripts build && mv build dist",
     "server": "nodemon --watch src/server src/server/start.js",
-    "start": "concurrently --kill-others-on-fail 'yarn run server' 'yarn run client'"
+    "start": "concurrently --kill-others-on-fail 'yarn run server' 'yarn run client'",
+	"now-build": "yarn build"
   },
   "eslintConfig": {
     "extends": "react-app"
