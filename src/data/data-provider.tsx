@@ -5,11 +5,14 @@ import {
     Store,
     ValidAction
 } from "./data";
-import {useContext} from "react";
+import {useCallback, useContext, useReducer} from "react";
 import * as actions from './actions'
 
 type Props = {
     children: React.ReactChild | React.ReactChildren,
+    onDispatch?: (action: ValidAction) => void,
+    filter?: (action: ValidAction) => boolean,
+    getInitialState: () => Promise<Store>,
 }
 
 type State = {
@@ -34,7 +37,7 @@ export function useStore<T>(selector: (store: Store) => T): T {
     return value
 }
 
-function useDispatch() {
+export function useDispatch() {
     return useContext(DispatchContext)
 }
 
@@ -57,76 +60,72 @@ export function useAction<A extends keyof ActionType>(actionName: A): ActionType
     }
 }
 
-type ProviderState = {
-    store: Store,
-    errorMessage?: string,
+const cacheMap = new WeakMap()
+function getCache(func: () => Promise<any>) {
+    if (!cacheMap.has(func)) {
+        console.log('creating new cache')
+        cacheMap.set(func, createCache(func))
+    }
+
+    return cacheMap.get(func)
 }
+function createCache(func: () => Promise<any>) {
+    let promise: Promise<any> | undefined
+    let value: any
+    let resolved = false
 
-const initialStore = {
-    games: {},
-    players: {},
-    rounds: {},
-    tournaments: {},
-}
-
-export class DataProvider extends React.PureComponent<Props, ProviderState> {
-    state: ProviderState = {
-        store: initialStore,
-    }
-
-    handleDispatch = (action: ValidAction) => {
-        this.setState((state: ProviderState) => ({
-            store: reducer(state.store, action),
-        }))
-    }
-
-    handleReset = () => {
-        this.setState({
-            errorMessage: undefined,
-            store: initialStore,
-        })
-    }
-
-    static getDerivedStateFromError(error: Error) {
-        return {
-            errorMessage: error.message,
-        }
-    }
-
-    componentDidUpdate(prevProps: Props, prevState: ProviderState) {
-        if (prevState.store !== this.state.store) {
-            localStorage.setItem('high-hat.state', JSON.stringify(this.state.store))
-        }
-    }
-
-    componentWillMount(): void {
-        try {
-            const item = localStorage.getItem('high-hat.state')
-            if (!item) {
-                return
+    return {
+        get value(): any {
+            if (resolved) {
+                return value
             }
-            const store = importState(JSON.parse(item))
-            this.setState({ store })
-        } catch (e) {
-            localStorage.removeItem('high-hat.state')
+
+            if (promise === undefined) {
+                promise = func()
+                    .then((returnValue) => {
+                        value = returnValue
+                        resolved = true
+                    })
+                    .catch((error) => {
+                        console.log(error)
+                        resolved = true
+                    })
+            }
+
+            throw promise
+        },
+        reset() {
+            promise = undefined
+            value = undefined
+            resolved = false
         }
+    }
+}
+
+export function DataProvider(props: Props) {
+
+    const storeCache = getCache(props.getInitialState)
+    const [state, dispatch] = useReducer(reducer, storeCache.value)
+    if (state === undefined) {
+        throw new Error('State cannot be undefined')
     }
 
-    render() {
-        if (this.state.errorMessage) {
-            return (
-                <div className="error">
-                    <b>{this.state.errorMessage}</b>
-                    <button onClick={this.handleReset}>Reset state</button>
-                </div>
-            )
+    const onDispatch = useCallback((action: any) => {
+        if (props.filter && !props.filter(action)) {
+            return
         }
-        return (
-            <DispatchContext.Provider value={this.handleDispatch}>
-                <Context.Provider value={this.state.store}>
-                    {this.props.children}
-                </Context.Provider>
-            </DispatchContext.Provider>
-        )
-    }
+
+        if (props.onDispatch) {
+            props.onDispatch(action)
+        }
+        dispatch(action)
+    }, [dispatch, props.onDispatch, props.filter])
+
+    return (
+        <DispatchContext.Provider value={onDispatch}>
+            <Context.Provider value={state}>
+                {props.children}
+            </Context.Provider>
+        </DispatchContext.Provider>
+    )
 }
