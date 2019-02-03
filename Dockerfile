@@ -1,5 +1,6 @@
 FROM node:10-alpine
 
+WORKDIR /usr/src/app
 EXPOSE 5000
 RUN apk add --no-cache tini
 ENTRYPOINT ["/sbin/tini", "--"]
