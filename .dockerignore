@@ -4,3 +4,5 @@ Dockerfile
 /lib
 .idea/
 .env
+docker-compose.yml
+data/

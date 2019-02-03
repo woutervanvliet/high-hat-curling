@@ -84,6 +84,7 @@ function Listener(props: { children: any, path: string }) {
         const socket = io(props.path, {
             autoConnect: false,
             reconnection: true,
+            transports: ['websocket'],
         })
         socket.on('dispatch', (event: ValidAction & { serverTime: number }) => {
             dispatch(event)
@@ -113,7 +114,7 @@ class App extends Component {
     return (
         <Suspense fallback={<p>Loading...</p>}>
             <DataProvider onDispatch={onDispatch} getInitialState={loadData} filter={filter}>
-                <Listener path="ws://localhost:5000">
+                <Listener path={`ws://${document.location.origin.split('/')[2]}/`}>
                     <BrowserRouter basename="/">
                         <React.Suspense fallback={<Spinner />}>
                             <Switch>

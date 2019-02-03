@@ -30,7 +30,10 @@ export default async function main() {
 	const app = express()
 	const port = 5000
 	const server = new http.Server(app)
-	const socket = io(server)
+	const socket = io(server, {
+		serveClient: false,
+		transports: ['websocket'],
+	})
 
 	const dispatch = (event: ValidAction) => {
 		socket.emit('dispatch', {

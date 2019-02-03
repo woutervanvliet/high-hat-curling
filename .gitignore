@@ -24,6 +24,8 @@ yarn-error.log*
 /.idea
 /src/**/*.js
 /src/**/*.jsx
+!/src/server/start.js
 .env
 lib/
 .openode
+data/

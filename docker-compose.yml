@@ -1,0 +1,20 @@
+version: '2'
+services:
+  app:
+    build: .
+    env_file:
+      - .env-compose
+    ports:
+      - 8081:5000
+    depends_on:
+      - database
+  database:
+    image: mongo:latest
+    environment:
+      - MONGO_DATA_DIR=/data/db
+      - MONGO_LOG_DIR=/data/db-log
+    volumes:
+      - ./data/db:/data/db
+      - ./data/db-log:/data/db-log
+    ports:
+      - 27017:27017
